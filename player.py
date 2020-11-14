@@ -1,12 +1,33 @@
 from board import Direction, Rotation
 from random import Random
+import math
+
+def same(array):
+    """
+    return false if the array is not consist of the same item.
+    otherwise return the item.
+    """
+    reference = array[0]
+    for i in array:
+        if i != reference:
+            return False
+    return reference
 
 class Candidate():
-    def __init__(self, board = None, step = 0, rotation = 0):
+    """
+    A wrapper of Board().
+    Contains some data and function that help choose_action().
+    """
+    def __init__(self, board = None, target = 0, rotation = 0):
         self.board = board
-        self.step = step    # the number of horizontal translation required by the block.
-        self.rotation = rotation    # the number of anciclockwise rotation required for the block.
-    
+        self.target = target    # the number of horizontal translation required by the block.
+        self.rotation_target = rotation    # the number of anciclockwise rotation required for the block.
+        self.rotation_count = 0
+        if board.cells:
+            self.height = min(y for (x, y) in board.cells)    # different from Board().height. Keep tracking the tallest position.
+        else:
+            self.height = 24
+
     @property
     def score(self):
         if self.board:
@@ -14,47 +35,70 @@ class Candidate():
         else:
             return 0
 
-    @property
-    def height(self):
-        self.board.score += self.board.clean()
-        return min(y for (x, y) in self.board.cells)
+    def __call__(self):
+        return (self.target, self.rotation)
 
     def rotate(self):
         """
         Rotate the block to the desired orientation.
+        return True if the block lands.
+        False if not land
         """
         if self.board.falling == None:
-            return False
-
-        if self.rotation >= 4:
-            self.rotate(self.board, self.rotation - 4)
-
-        elif self.rotation <= 2:
-            for i in range(self.rotation):
-                if not self.board.rotate(Rotation.Anticlockwise):
-                    return False
             return True
-        else:
-            return self.board.rotate(Rotation.Clockwise) # 3 anticlockwise is equivalent to 1 clockwise rotation.
-    
+
+        while self.rotation_count < self.rotation_target:
+            if self.board.rotate(Rotation.Anticlockwise) or self.board.falling.supported(self.board):
+                self.rotation_target = self.rotation_count
+                return True
+            self.rotation_count += 1
+        return self.board.falling.supported(self.board)
+
     def move(self):
-        """
+        """ 
         Move the block to the desired column.
+        return True if the block lands.
+        False if not landed
+        """
+        if not self.board.falling:
+            return True
+
+        while self.board.falling and self.target != self.board.falling.left:
+            if self.target > self.board.falling.left:
+                # no translation or move to the right.
+                if self.board.move(Direction.Right) or self.board.falling.supported(self.board):
+                    self.target = self.board.falling.left
+                    return True
+            else:
+                # move to the left.
+                if self.board.move(Direction.Left) or self.board.falling.supported(self.board):
+                    self.target = self.board.falling.left
+                    return True
+        return self.board.falling.supported(self.board)
+
+    def try_move(self):
+        """
+        Apply the move and rotation.
+        return True if the action is applied (self.height and self.board.score are updated).
+        return False if the action is not (or cannot be) applied.
         """
         if self.board.falling == None:
-            return False
-
-        if self.step >= 0:
-            for i in range(self.step):
-                if not self.board.move(Direction.Right):
-                    return False    # The required rotation cannot be done
             return True
-        else:
-            step = -self.step
-            for i in range(step):
-                if not self.board.move(Direction.Left):
-                    return False    # The required rotation cannot be done
-            return True
+        
+        try:
+            self.height = min(y for (x, y) in self.board.cells)
+        except ValueError:
+            self.height - 24
+        self.falling = self.board.falling
+        moved = self.move()
+        rotated = self.rotate()
+        result = moved and rotated
+        self.height = min(self.falling.top, self.height)
+        new_score = self.board.clean()
+        self.board.score += new_score
+        if new_score:
+            self.height += math.log2(new_score / 100)   # convert the score back into the number of lines cleaned.
+        return result
 
 class Player:
     """
@@ -70,15 +114,17 @@ class MyPlayer(Player):
         self.translation = [Direction.Left, Direction.Right, Direction.Down]
         self.rotation = [Rotation.Anticlockwise, Rotation.Clockwise]
         self.candidates = []
-    
+
     def max_score(self, array = None):
         if array == None:
             array = self.candidates
-        result = [Candidate()]
+        best_score = 0
+        result = []
         for i in array:
-            if i.score > result[0].score:
+            if i.board.score > best_score:
                 result = [i]
-            elif i.score == result[0].score:
+                best_score = i.board.score
+            elif i.board.score == best_score:
                 result.append(i)
         return result
 
@@ -88,61 +134,53 @@ class MyPlayer(Player):
         """
         if array == None:
             array = self.candidates
-        result = [Candidate()]
+
+        best_height = array[0].height
+        result = [array[0]]
         for i in array:
-            if i.height > result[0].height:
+            if i.height > best_height:
                 result = [i]
-            elif i.height == result[0].height:
+                best_height = i.height
+            elif i.height == best_height:
                 result.append(i)
         return result
 
-    def score(self, board):
-        return board.height
-
     def choose_action(self, board):
-        if (not board.cells) or (not board.falling):
-            return None
+        result = [] # initialisation of the list of actions
+
+        if (not board.falling):
+            # no blocks falling.
+            result = [Direction.Drop]
         else:
             # create clones for each positions that can be falled on.
-            for orientation in range(4):
-                for horizontal in range(-1 - board.falling.left, board.width - board.falling.right + 1):
+            for horizontal in range(board.width + 1):
+                for orientation in range(4):
                     new_board = board.clone()
-                    self.candidates.append(Candidate(new_board, step=horizontal, rotation=orientation));
-            
-            for candidate in self.candidates:
-                if candidate.rotate() and candidate.move():
-                    # the moves can be done. 
-                    if candidate.board.falling == None:
-                        # the falling block has landed.
-                        candidate.board.score += candidate.board.clean()
-                    else:
-                        # the falling block hasn't landed yet.
-                        pass
-                else:
-                    # either the move or the rotation cannot be done. remove the candidate.
-                    self.candidates.remove(candidate)
+                    falling = new_board.falling
+                    new_candidate = Candidate(new_board, target=horizontal, rotation=orientation)
+                    self.candidates.append(new_candidate)
+                    new_candidate.try_move()
             
             # determin the best position for the board (highest score with lowest height).
-            best_score = self.max_score(self.candidates)
-            if len(best_score) == 1:
-                best_score = self.min_height(best_score)
+            best_candidate = self.max_score(self.min_height(self.candidates))[0]
             
-            best_candidate = best_score[0]
-            result = []
-            if not (best_candidate.step == best_candidate.rotation == 0):
-                # actions need to be taken.
-                if best_candidate.rotation <= 2:
-                    result += [Rotation.Anticlockwise] * best_candidate.rotation
+            print(best_candidate.height)
+            if (best_candidate.target != board.falling.left or best_candidate.rotation_target):
+                # generate the series of actions need to be taken.
+                if best_candidate.rotation_target <= 2:
+                    result += [Rotation.Anticlockwise] * best_candidate.rotation_target
                 else:
                     result += [Rotation.Clockwise]
 
-                if best_candidate.step < 0:
-                    result += [Direction.Left] * (-best_candidate.step)
+                if best_candidate.target < board.falling.left:
+                    result += [Direction.Left] * (board.falling.left - best_candidate.target)
+                elif best_candidate.target > board.falling.left:
+                    result += [Direction.Right] * (best_candidate.target - board.falling.left)
                 else:
-                    result += [Direction.Right] * best_candidate.step
-            result.append(Direction.Drop)
-            self.candidates = []
-            return result
+                    result.append(Direction.Down)
+            else:
+                result.append(Direction.Down)
+        return result
 
 class RandomPlayer(Player):
     def __init__(self, seed=None):
@@ -155,6 +193,6 @@ class RandomPlayer(Player):
             Direction.Down,
             Rotation.Anticlockwise,
             Rotation.Clockwise,
-        ])
+            ])
 
 SelectedPlayer = MyPlayer
