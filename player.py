@@ -120,6 +120,8 @@ class MyPlayer(Player):
                 best_score = i.board.score
             elif i.board.score == best_score:
                 result.append(i)
+            else:
+                array.remove(i)
         return result
 
     def min_height(self, array = None):
@@ -137,6 +139,8 @@ class MyPlayer(Player):
                 best_height = i.height
             elif i.height == best_height:
                 result.append(i)
+            else:
+                array.remove(i)
         return result
 
     def choose_action(self, board):
@@ -159,9 +163,10 @@ class MyPlayer(Player):
                         new_candidate.board.move(Direction.Drop)
                     new_candidate.board.score += new_candidate.board.clean()
                     new_candidate.height = min(y for (x,y) in new_candidate.board.cells)
-
+            
+            print(list(i.height for i in self.candidates))
             # determin the best position for the board (highest score with lowest height).
-            best_candidate = self.max_score(self.min_height(self.candidates))[0]
+            best_candidate = self.max_score(self.min_height(self.candidates))[-1]
             
             if (best_candidate.target != board.falling.left or best_candidate.rotation_target):
                 # generate the series of actions need to be taken.
@@ -178,7 +183,6 @@ class MyPlayer(Player):
                     result.append(Direction.Down)
             else:
                 result.append(Direction.Down)
-            result.append(Direction.Drop)
         return result
 
 class RandomPlayer(Player):
