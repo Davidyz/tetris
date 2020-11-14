@@ -92,13 +92,7 @@ class Candidate():
         self.falling = self.board.falling
         moved = self.move()
         rotated = self.rotate()
-        result = moved and rotated
-        self.height = min(self.falling.top, self.height)
-        new_score = self.board.clean()
-        self.board.score += new_score
-        if new_score:
-            self.height += math.log2(new_score / 100)   # convert the score back into the number of lines cleaned.
-        return result
+        return moved and rotated
 
 class Player:
     """
@@ -153,18 +147,22 @@ class MyPlayer(Player):
             result = [Direction.Drop]
         else:
             # create clones for each positions that can be falled on.
-            for horizontal in range(board.width + 1):
+            for horizontal in range(board.width - (board.falling.right - board.falling.left)):
                 for orientation in range(4):
                     new_board = board.clone()
                     falling = new_board.falling
                     new_candidate = Candidate(new_board, target=horizontal, rotation=orientation)
                     self.candidates.append(new_candidate)
                     new_candidate.try_move()
-            
+
+                    if new_candidate.board.falling:
+                        new_candidate.board.move(Direction.Drop)
+                    new_candidate.board.score += new_candidate.board.clean()
+                    new_candidate.height = min(y for (x,y) in new_candidate.board.cells)
+
             # determin the best position for the board (highest score with lowest height).
             best_candidate = self.max_score(self.min_height(self.candidates))[0]
             
-            print(best_candidate.height)
             if (best_candidate.target != board.falling.left or best_candidate.rotation_target):
                 # generate the series of actions need to be taken.
                 if best_candidate.rotation_target <= 2:
@@ -180,6 +178,7 @@ class MyPlayer(Player):
                     result.append(Direction.Down)
             else:
                 result.append(Direction.Down)
+            result.append(Direction.Drop)
         return result
 
 class RandomPlayer(Player):
