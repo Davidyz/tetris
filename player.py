@@ -1,6 +1,6 @@
 from board import Direction, Rotation
 from random import Random
-import math
+import time
 
 def same(array):
     """
@@ -23,10 +23,17 @@ class Candidate():
         self.target = target    # the number of horizontal translation required by the block.
         self.rotation_target = rotation    # the number of anciclockwise rotation required for the block.
         self.rotation_count = 0
-        if board.cells:
-            self.height = min(y for (x, y) in board.cells)    # different from Board().height. Keep tracking the tallest position.
+
+    @property
+    def height(self):
+        if self.board.cells:
+            return min(y for (x, y) in self.board.cells)    # different from Board().height. Keep tracking the tallest position.
         else:
-            self.height = 24
+            return 24
+    
+    @property
+    def falling(self):
+        return self.board.falling
 
     @property
     def score(self):
@@ -36,7 +43,7 @@ class Candidate():
             return 0
 
     def __call__(self):
-        return (self.target, self.rotation)
+        return (self.target, self.rotation_target)
 
     def rotate(self):
         """
@@ -52,7 +59,7 @@ class Candidate():
                 self.rotation_target = self.rotation_count
                 return True
             self.rotation_count += 1
-        return self.board.falling.supported(self.board)
+        return False #self.board.falling.supported(self.board)
 
     def move(self):
         """ 
@@ -62,19 +69,22 @@ class Candidate():
         """
         if not self.board.falling:
             return True
-
+        
+        left = self.board.falling.left
         while self.board.falling and self.target != self.board.falling.left:
             if self.target > self.board.falling.left:
                 # no translation or move to the right.
                 if self.board.move(Direction.Right) or self.board.falling.supported(self.board):
-                    self.target = self.board.falling.left
-                    return True
+                    self.target = left
+                    return left
+                left += 1
             else:
                 # move to the left.
                 if self.board.move(Direction.Left) or self.board.falling.supported(self.board):
-                    self.target = self.board.falling.left
+                    self.target = left
                     return True
-        return self.board.falling.supported(self.board)
+                left -= 1
+        return False #self.board.falling.supported(self.board)
 
     def try_move(self):
         """
@@ -84,15 +94,9 @@ class Candidate():
         """
         if self.board.falling == None:
             return True
-        
-        try:
-            self.height = min(y for (x, y) in self.board.cells)
-        except ValueError:
-            self.height - 24
-        self.falling = self.board.falling
-        moved = self.move()
-        rotated = self.rotate()
-        return moved and rotated
+           
+        if not (self.rotate() or self.move()):
+            self.board.move(Direction.Drop)
 
 class Player:
     """
@@ -112,16 +116,17 @@ class MyPlayer(Player):
     def max_score(self, array = None):
         if array == None:
             array = self.candidates
+        
         best_score = 0
         result = []
+        
         for i in array:
             if i.board.score > best_score:
                 result = [i]
                 best_score = i.board.score
             elif i.board.score == best_score:
                 result.append(i)
-            else:
-                array.remove(i)
+        
         return result
 
     def min_height(self, array = None):
@@ -133,42 +138,41 @@ class MyPlayer(Player):
 
         best_height = array[0].height
         result = [array[0]]
+        
         for i in array:
             if i.height > best_height:
                 result = [i]
                 best_height = i.height
             elif i.height == best_height:
                 result.append(i)
-            else:
-                array.remove(i)
+
         return result
-
+    
     def choose_action(self, board):
-        result = [] # initialisation of the list of actions
-
+        result = list() # initialisation of the list of actions
+        self.candidates = list()
         if (not board.falling):
             # no blocks falling.
-            result = [Direction.Drop]
+            result = Direction.Drop
         else:
             # create clones for each positions that can be falled on.
-            for horizontal in range(board.width - (board.falling.right - board.falling.left)):
+            horizontal_range = board.width - (board.falling.right - board.falling.left)
+            for horizontal in range(0, horizontal_range):
                 for orientation in range(4):
                     new_board = board.clone()
-                    falling = new_board.falling
+                    #new_board.cells = board.cells
+
                     new_candidate = Candidate(new_board, target=horizontal, rotation=orientation)
                     self.candidates.append(new_candidate)
                     new_candidate.try_move()
-
-                    if new_candidate.board.falling:
-                        new_candidate.board.move(Direction.Drop)
-                    new_candidate.board.score += new_candidate.board.clean()
-                    new_candidate.height = min(y for (x,y) in new_candidate.board.cells)
             
-            print(list(i.height for i in self.candidates))
             # determin the best position for the board (highest score with lowest height).
-            best_candidate = self.max_score(self.min_height(self.candidates))[-1]
+            list_of_best_candidates = self.min_height(self.max_score(self.candidates))
+            best_candidate = self.choose(list_of_best_candidates)
+            #print(set(board) - set(best_candidate.board))
             
-            if (best_candidate.target != board.falling.left or best_candidate.rotation_target):
+            #print(board.falling.right, board.falling.left)
+            if ((best_candidate.target != board.falling.left) or best_candidate.rotation_target):
                 # generate the series of actions need to be taken.
                 if best_candidate.rotation_target <= 2:
                     result += [Rotation.Anticlockwise] * best_candidate.rotation_target
@@ -183,7 +187,11 @@ class MyPlayer(Player):
                     result.append(Direction.Down)
             else:
                 result.append(Direction.Down)
+            result.append(Direction.Drop)
         return result
+    
+    def choose(self, array):
+        return array[0]
 
 class RandomPlayer(Player):
     def __init__(self, seed=None):
