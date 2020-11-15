@@ -209,7 +209,7 @@ class MyPlayer(Player):
                     new_candidate.try_move()
             
             # determin the best position for the board (highest score with lowest height).
-            list_of_best_candidates = self.min_height(self.max_score(self.candidates))
+            list_of_best_candidates = self.min_height(self.min_holes(self.max_score(self.candidates)))
             best_candidate = self.choose(list_of_best_candidates)
             
             if ((best_candidate.target != board.falling.left) or best_candidate.rotation_target):
