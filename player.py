@@ -48,22 +48,21 @@ class Candidate():
         try to count the number of holes.
         """
         number = 0
-        cells = {i:[] for i in range(self.board.width)}
+        cells = {i:[24] for i in range(self.board.width)}
         for (x, y) in self.board.cells:
             cells[x].append(y)
 
         for column in cells:
-            if cells[column] == []:
+            if cells[column] == [24]:
                 continue
-            cells[column].sort()
-            cells[column] = list(cells[column][i] for i in range(len(cells[column]) - 1, -1, -1))
-        
-            for cell in range(len(cells[column]) - 1):
-                if cell == 0 and cells[column][cell] != 23:
-                    number += 23 - cells[column][cell]
-                    continue
-                if cells[column][cell] - cells[column][cell + 1] > 1:
-                    number += cells[column][cell] - cells[column][cell + 1] - 1
+            temp_column = cells[column]
+            temp_column.sort()
+            temp_column = list(temp_column[i] for i in range(len(temp_column) - 1, -1, -1))
+                
+
+            for cell in range(len(temp_column) - 1):
+                number += temp_column[cell] - temp_column[cell + 1] - 1
+
         return number
 
     def __call__(self):
