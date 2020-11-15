@@ -50,20 +50,20 @@ class Candidate():
         number = 0
         cells = {i:[] for i in range(self.board.width)}
         for (x, y) in self.board.cells:
-            if cells[x]:
-                cells[x].append(y)
-            else:
-                cells[x] = [y]
+            cells[x].append(y)
 
         for column in cells:
+            if cells[column] == []:
+                continue
             cells[column].sort()
-
+            cells[column] = list(cells[column][i] for i in range(len(cells[column]) - 1, -1, -1))
+        
             for cell in range(len(cells[column]) - 1):
                 if cell == 0 and cells[column][cell] != 23:
                     number += 23 - cells[column][cell]
                     continue
-                if cells[column][cell + 1] - cells[column][cell] > 1:
-                    number += cells[column][cell + 1] - cells[column][cell]
+                if cells[column][cell] - cells[column][cell + 1] > 1:
+                    number += cells[column][cell] - cells[column][cell + 1] - 1
         return number
 
     def __call__(self):
@@ -135,12 +135,12 @@ class Player:
 
 class MyPlayer(Player):
     def __init__(self):
-        self.actions = [Direction.Left, Direction.Right, Direction.Down, Rotation.Anticlockwise, Rotation.Clockwise]
-        self.translation = [Direction.Left, Direction.Right, Direction.Down]
-        self.rotation = [Rotation.Anticlockwise, Rotation.Clockwise]
         self.candidates = []
     
     def min_holes(self, array = None):
+        """
+        return candidates with minimum number of holes.
+        """
         if array == None:
             array = self.candidates
         
@@ -157,6 +157,9 @@ class MyPlayer(Player):
         return result
 
     def max_score(self, array = None):
+        """
+        return candidates with highest scores.
+        """
         if array == None:
             array = self.candidates
         
