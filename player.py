@@ -23,7 +23,27 @@ class Candidate():
         self.target = target    # the number of horizontal translation required by the block.
         self.rotation_target = rotation    # the number of anciclockwise rotation required for the block.
         self.rotation_count = 0
+        self.new_score = 0 
     
+    @property
+    def var_height(self):
+        cells = {i:[24] for i in range(self.board.width)}
+        for (x, y) in self.board.cells:
+            cells[x].append(y)
+
+        height = []
+        for i in cells:
+            height.append(min(cells[i]))
+        return sum(i**2 for i in height) / len(height) - (sum(height) / len(height)) ** 2
+
+    @property
+    def bottom_holes(self):
+        count = 0
+        for (x, y) in self.board.cells:
+            if y == 23:
+                count += 1
+        return self.board.width - count
+
     @property
     def mean_height(self):
 
@@ -38,23 +58,18 @@ class Candidate():
         return sum(height) / len(height)
 
     @property
-    def height(self):
-        if self.board.cells:
-            return min(y for (x, y) in self.board.cells)    # different from Board().height. Keep tracking the tallest position.
-        else:
-            return 24
-    
-    @property
     def falling(self):
         return self.board.falling
-
+    
+    '''
     @property
     def score(self):
         if self.board:
             return self.board.score
         else:
             return 0
-    
+    '''
+
     @property
     def holes(self):
         """
@@ -131,11 +146,14 @@ class Candidate():
         if self.board.falling == None:
             return True
         
+        initial_score = self.board.score
         moved = self.move()
         rotated = self.rotate()
         landed = moved or rotated
         if not landed:
             self.board.move(Direction.Drop)
+        final_score = self.board.score
+        self.score = (final_score - initial_score) // 100
 
 class Player:
     """
@@ -187,6 +205,44 @@ class MyPlayer(Player):
         
         return result
 
+    def min_bottom_holes(self, array = None):
+        """
+        find candidates with least holes at the bottom line.
+        """
+        if array == None:
+            array = self.candidates
+
+        best_num = array[0].bottom_holes
+        result = [array[0]]
+        
+        for i in array:
+            if i.bottom_holes < best_num:
+                result = [i]
+                best_num = i.bottom_holes
+            elif i.bottom_holes == best_num:
+                result.append(i)
+
+        return result
+
+    def min_var_height(self, array = None):
+        """
+        find candidates with lowest variances of the heights of each column.
+        """
+        if array == None:
+            array = self.candidates
+
+        best_var = array[0].var_height
+        result = [array[0]]
+        
+        for i in array:
+            if i.var_height < best_var:
+                result = [i]
+                best_var = i.var_height
+            elif i.var_height == best_var:
+                result.append(i)
+
+        return result
+
     def min_mean_height(self, array = None):
         """
         The height at ground is 24, so the higher the board, the smaller the value. returns a list of the lowest boards.
@@ -206,25 +262,6 @@ class MyPlayer(Player):
 
         return result
 
-    def min_height(self, array = None):
-        """
-        The height at ground is 24, so the higher the board, the smaller the value. returns a list of the lowest boards.
-        """
-        if array == None:
-            array = self.candidates
-
-        best_height = array[0].height
-        result = [array[0]]
-        
-        for i in array:
-            if i.height > best_height:
-                result = [i]
-                best_height = i.height
-            elif i.height == best_height:
-                result.append(i)
-
-        return result
-    
     def choose_action(self, board):
         result = list() # initialisation of the list of actions
         self.candidates = list()
@@ -242,9 +279,14 @@ class MyPlayer(Player):
                     self.candidates.append(new_candidate)
                     new_candidate.try_move()
             
-            # determin the best position for the board (highest score with lowest height).
-            best_candidate = self.choose(self.min_height(self.min_mean_height(self.min_holes(self.max_score(self.candidates)))))
-            
+            # determin the best position for the board. Later function has higher priority and is called first.
+            sequence = [self.min_mean_height, self.min_bottom_holes, self.min_var_height, self.max_score, self.min_holes]
+            best_candidates = self.candidates
+            for function in range(len(sequence) - 1, -1, -1):
+                # reversed order so that the order of execution matches the way we usually write nested function calls.
+                best_candidates = sequence[function](best_candidates)
+            best_candidate = self.choose(best_candidates)
+
             if ((best_candidate.target != board.falling.left) or best_candidate.rotation_target):
                 # generate the series of actions need to be taken.
                 if best_candidate.rotation_target <= 2:
@@ -256,11 +298,12 @@ class MyPlayer(Player):
                     result += [Direction.Left] * (board.falling.left - best_candidate.target)
                 elif best_candidate.target > board.falling.left:
                     result += [Direction.Right] * (best_candidate.target - board.falling.left)
-            result.append(Direction.Drop)
+            else:
+                result.append(Direction.Drop)
         return result
     
     def choose(self, array):
-        return choice(array)   # tested to score better for some reason.
+        return array[len(array) // 3]   # tested to score better for some reason.
 
 class RandomPlayer(Player):
     def __init__(self, seed=None):
