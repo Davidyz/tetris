@@ -23,6 +23,19 @@ class Candidate():
         self.target = target    # the number of horizontal translation required by the block.
         self.rotation_target = rotation    # the number of anciclockwise rotation required for the block.
         self.rotation_count = 0
+    
+    @property
+    def mean_height(self):
+
+        cells = {i:[24] for i in range(self.board.width)}
+        for (x, y) in self.board.cells:
+            if y != 24:
+                cells[x].append(y)
+
+        height = []
+        for i in cells:
+            height.append(max(cells[i]))
+        return sum(height) / len(height)
 
     @property
     def height(self):
@@ -174,6 +187,25 @@ class MyPlayer(Player):
         
         return result
 
+    def min_mean_height(self, array = None):
+        """
+        The height at ground is 24, so the higher the board, the smaller the value. returns a list of the lowest boards.
+        """
+        if array == None:
+            array = self.candidates
+
+        best_height = array[0].mean_height
+        result = [array[0]]
+        
+        for i in array:
+            if i.mean_height > best_height:
+                result = [i]
+                best_height = i.mean_height
+            elif i.mean_height == best_height:
+                result.append(i)
+
+        return result
+
     def min_height(self, array = None):
         """
         The height at ground is 24, so the higher the board, the smaller the value. returns a list of the lowest boards.
@@ -211,7 +243,7 @@ class MyPlayer(Player):
                     new_candidate.try_move()
             
             # determin the best position for the board (highest score with lowest height).
-            best_candidate = self.choose(self.min_height(self.min_holes(self.max_score(self.candidates))))
+            best_candidate = self.choose(self.min_height(self.min_mean_height(self.min_holes(self.max_score(self.candidates)))))
             
             if ((best_candidate.target != board.falling.left) or best_candidate.rotation_target):
                 # generate the series of actions need to be taken.
@@ -228,7 +260,7 @@ class MyPlayer(Player):
         return result
     
     def choose(self, array):
-        return array[len(array) // 6]   # tested to score better for some reason.
+        return choice(array)   # tested to score better for some reason.
 
 class RandomPlayer(Player):
     def __init__(self, seed=None):
