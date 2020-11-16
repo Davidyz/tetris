@@ -211,8 +211,7 @@ class MyPlayer(Player):
                     new_candidate.try_move()
             
             # determin the best position for the board (highest score with lowest height).
-            list_of_best_candidates = self.min_height(self.min_holes(self.max_score(self.candidates)))
-            best_candidate = self.choose(list_of_best_candidates)
+            best_candidate = self.choose(self.min_height(self.min_holes(self.max_score(self.candidates))))
             
             if ((best_candidate.target != board.falling.left) or best_candidate.rotation_target):
                 # generate the series of actions need to be taken.
@@ -229,7 +228,7 @@ class MyPlayer(Player):
         return result
     
     def choose(self, array):
-        return array[len(array) // 2]   # tested to score better for some reason.
+        return array[len(array) // 6]   # tested to score better for some reason.
 
 class RandomPlayer(Player):
     def __init__(self, seed=None):
