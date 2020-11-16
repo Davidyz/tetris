@@ -280,7 +280,7 @@ class MyPlayer(Player):
                     new_candidate.try_move()
             
             # determin the best position for the board. Later function has higher priority and is called first.
-            sequence = [self.min_mean_height, self.min_bottom_holes, self.min_var_height, self.max_score, self.min_holes]
+            sequence = [self.min_var_height, self.min_mean_height, self.min_bottom_holes, self.max_score, self.min_holes]
             best_candidates = self.candidates
             for function in range(len(sequence) - 1, -1, -1):
                 # reversed order so that the order of execution matches the way we usually write nested function calls.
