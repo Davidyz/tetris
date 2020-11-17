@@ -21,6 +21,10 @@ class Candidate():
     def __init__(self, board = None, target = 0, rotation = 0):
         self.board = board
         self.target = target    # the number of horizontal translation required by the block.
+        if self.board.falling and self.board.falling.bottom - self.board.falling.top == self.board.falling.right - self.board.falling.left == 1:
+            rotation = 0
+        elif self.board.falling and min(self.board.falling.right - self.board.falling.left, self.board.falling.bottom - self.board.falling.top) == 0 and rotation >= 2:
+            rotation -= 2
         self.rotation_target = rotation    # the number of anciclockwise rotation required for the block.
         self.rotation_count = 0
         self.new_score = 0 
