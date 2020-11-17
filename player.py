@@ -1,6 +1,7 @@
 from board import Direction, Rotation
 from random import Random, choice
 import time
+import multiprocessing as mp
 
 def same(array):
     """
@@ -32,28 +33,39 @@ class Candidate():
             rotation -= 2
         self.rotation_target = rotation    # the number of anciclockwise rotation required for the block.
         self.rotation_count = 0
+        self.cells = {i:[] for i in range(self.board.width)}
+
+        self.var_height = -1
+        self.bottom_holes = -1
+        self.mean_height = -1
+        self.var_height = -1
+        self.holes = -1
+
         self.next_mean_height = -1 
         self.next_var_height = -1
         self.next_holes = 240
         self.next_bottom_holes = -1
+        
+    def update_cells(self):
+        for (x, y) in self.board.cells:
+            self.cells[x].append(y)
+        return self.cells
 
-    
-    @property
-    def var_height(self):
+    def cal_var_height(self):
         if self.next_var_height != -1:
             return self.next_var_height
 
-        cells = {i:[24] for i in range(self.board.width)}
-        for (x, y) in self.board.cells:
-            cells[x].append(y)
-
         height = []
-        for i in cells:
-            height.append(min(cells[i]))
-        return sum(i**2 for i in height) / len(height) - (sum(height) / len(height)) ** 2
+        for i in self.cells:
+            if self.cells[i] == []:
+                height.append(24)
+                continue
+            height.append(min(self.cells[i]))
 
-    @property
-    def bottom_holes(self):
+        # modified equiation to save time on computation. divition is too expensive.
+        return sum(i**2 for i in height) * len(height) - (sum(height)) ** 2
+
+    def cal_bottom_holes(self):
         if self.next_bottom_holes != -1:
             return self.next_bottom_holes
 
@@ -63,45 +75,41 @@ class Candidate():
                 count += 1
         return self.board.width - count
 
-    @property
-    def mean_height(self):
+    def cal_mean_height(self):
         if self.next_mean_height != -1:
             return self.next_mean_height
 
-        cells = {i:[24] for i in range(self.board.width)}
-        for (x, y) in self.board.cells:
-            if y != 24:
-                cells[x].append(y)
-
+        cells = {i:[] for i in range(self.board.width)}
+        
         height = []
-        for i in cells:
-            height.append(max(cells[i]))
+        for i in self.cells:
+            if self.cells[i] != []:
+                height.append(min(self.cells[i]))
+            else:
+                height.append(24)
         return sum(height) / len(height)
 
     @property
     def falling(self):
         return self.board.falling
     
-    @property
-    def holes(self):
-        """
+    def cal_holes(self):
+        """ 
         try to count the number of holes.
         """
         if self.next_holes != 240:
             return self.next_holes
 
         number = 0
-        cells = {i:[24] for i in range(self.board.width)}
-        for (x, y) in self.board.cells:
-            cells[x].append(y)
-
-        for column in cells:
-            if cells[column] == [24]:
+        for column in self.cells:
+            if not self.cells[column]:
                 continue
-            temp_column = cells[column]
+            temp_column = self.cells[column]
             temp_column.sort()
             temp_column = list(temp_column[i] for i in range(len(temp_column) - 1, -1, -1))
-                
+            
+            if temp_column[0] < 23:
+                number += 23 - temp_column[0]
 
             for cell in range(len(temp_column) - 1):
                 number += temp_column[cell] - temp_column[cell + 1] - 1
@@ -167,7 +175,12 @@ class Candidate():
         landed = moved or rotated
         if not landed:
             self.board.move(Direction.Drop)
+        self.update_cells()
         final_score = self.board.score
+        self.holes = self.cal_holes()
+        self.bottom_holes = self.cal_holes()
+        self.mean_height = self.cal_mean_height()
+        self.var_height = self.cal_var_height()
         self.board.next == None
         
         if self.board.falling and self.board.next == None and not nested:
@@ -312,9 +325,9 @@ class MyPlayer(Player):
                     new_candidate = Candidate(new_board, target=horizontal, rotation=orientation)
                     self.candidates.append(new_candidate)
                     new_candidate.try_move()
-            
+
             # determin the best position for the board. Later function has higher priority and is called first.
-            sequence = [self.min_var_height, self.min_bottom_holes, self.min_mean_height, self.min_holes, self.max_score]
+            sequence = [self.min_mean_height, self.min_var_height, self.min_bottom_holes, self.max_score, self.min_holes]
             best_candidates = self.candidates
             for function in range(len(sequence) - 1, -1, -1):
                 # reversed order so that the order of execution matches the way we usually write nested function calls.
@@ -336,7 +349,7 @@ class MyPlayer(Player):
         return result
     
     def choose(self, array):
-        return array[len(array) // 3]   # tested to score better for some reason.
+        return array[0]   # tested to score better for some reason.
 
 class RandomPlayer(Player):
     def __init__(self, seed=None):
