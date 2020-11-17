@@ -141,7 +141,7 @@ class Candidate():
                 left -= 1
         return False #self.board.falling.supported(self.board)
 
-    def try_move(self):
+    def try_move(self, nested = False):
         """
         Apply the move and rotation.
         return True if the action is applied (self.height and self.board.score are updated).
@@ -157,6 +157,21 @@ class Candidate():
         if not landed:
             self.board.move(Direction.Drop)
         final_score = self.board.score
+        self.board.next == None
+        
+        if self.board.falling and self.board.next == None and not nested:
+            # find out the best move for the next block
+            subsequent_actions = SelectedPlayer().choose_action(board=self.board)
+
+            # apply the best move for the next block
+            target = self.board.falling.left + subsequent_actions.count(Direction.Right) - subsequent_actions.count(Direction.Left)
+            rotation_target = max(subsequent_actions.count(Rotation.Anticlockwise), subsequent_actions.count(Rotation.Clockwise) * 3)
+            next_candidate = Candidate(self.board.clone(), target = target, rotation=rotation_target)
+            next_candidate.try_move(True)
+
+            # obtain the score after the placement of the next block.
+            final_score = next_candidate.score
+
         self.score = (final_score - initial_score) // 100
 
 class Player:
@@ -284,7 +299,7 @@ class MyPlayer(Player):
                     new_candidate.try_move()
             
             # determin the best position for the board. Later function has higher priority and is called first.
-            sequence = [self.min_var_height, self.min_mean_height, self.min_bottom_holes, self.max_score, self.min_holes]
+            sequence = [self.min_var_height, self.min_bottom_holes, self.min_mean_height, self.max_score, self.min_holes]
             best_candidates = self.candidates
             for function in range(len(sequence) - 1, -1, -1):
                 # reversed order so that the order of execution matches the way we usually write nested function calls.
@@ -302,8 +317,7 @@ class MyPlayer(Player):
                     result += [Direction.Left] * (board.falling.left - best_candidate.target)
                 elif best_candidate.target > board.falling.left:
                     result += [Direction.Right] * (best_candidate.target - board.falling.left)
-            else:
-                result.append(Direction.Drop)
+            result.append(Direction.Drop)
         return result
     
     def choose(self, array):
