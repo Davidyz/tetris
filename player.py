@@ -47,6 +47,7 @@ class Candidate():
         self.next_bottom_holes = -1
         
     def update_cells(self):
+        self.cells = {i:[] for i in range(self.board.width)}
         for (x, y) in self.board.cells:
             self.cells[x].append(y)
         return self.cells
