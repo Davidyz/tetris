@@ -128,6 +128,12 @@ class Candidate():
         """
         if self.board.falling == None:
             return True
+        
+        while self.rotation_target > 3 or self.rotation_target < 0:
+            if self.rotation_target > 3:
+                self.rotation_target -= 4
+                continue
+            self.rotation_target += 4
 
         while self.rotation_count < self.rotation_target:
             if self.board.rotate(Rotation.Anticlockwise):
@@ -146,6 +152,9 @@ class Candidate():
             return True
         
         left = self.board.falling.left
+        while self.target + (self.board.falling.right - self.board.falling.left) >= self.board.width:
+            self.target -= 1
+
         while self.board.falling and self.target != self.board.falling.left:
             if self.target > self.board.falling.left:
                 # no translation or move to the right.
@@ -322,8 +331,8 @@ class MyPlayer(Player):
             result.append(Direction.Drop)
         else:
             # create clones for each positions that can be falled on.
-            horizontal_range = board.width - (board.falling.right - board.falling.left)
-            for horizontal in range(horizontal_range):
+            #horizontal_range = board.width - (board.falling.right - board.falling.left)
+            for horizontal in range(board.width):
                 for orientation in range(4):
                     new_board = board.clone()
                     new_candidate = Candidate(new_board, target=horizontal, rotation=orientation)
@@ -331,12 +340,11 @@ class MyPlayer(Player):
                     new_candidate.try_move()
 
             # determin the best position for the board. Later function has higher priority and is called first.
-            sequence = [self.min_var_height, self.min_bottom_holes, self.min_mean_height, self.min_range, self.min_holes, self.max_score]
-            best_candidates = self.candidates
+            sequence = [self.min_bottom_holes, self.min_mean_height, self.min_range, self.min_var_height, self.min_holes,  self.max_score]
             for function in range(len(sequence) - 1, -1, -1):
                 # reversed order so that the order of execution matches the way we usually write nested function calls.
-                best_candidates = sequence[function](best_candidates)
-            best_candidate = self.choose(best_candidates)
+                self.candidates = sequence[function](self.candidates)
+            best_candidate = self.choose(self.candidates)
 
             if ((best_candidate.target != board.falling.left) or best_candidate.rotation_target):
                 # generate the series of actions need to be taken.
@@ -349,6 +357,7 @@ class MyPlayer(Player):
                     result += [Direction.Left] * (board.falling.left - best_candidate.target)
                 elif best_candidate.target > board.falling.left:
                     result += [Direction.Right] * (best_candidate.target - board.falling.left)
+
             result.append(Direction.Drop)
         return result
     
