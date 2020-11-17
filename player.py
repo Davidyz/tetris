@@ -21,16 +21,28 @@ class Candidate():
     def __init__(self, board = None, target = 0, rotation = 0):
         self.board = board
         self.target = target    # the number of horizontal translation required by the block.
+        while rotation > 3 or rotation < 0:
+            if rotation > 3:
+                rotation -= 4
+            else:
+                rotation += 4
         if self.board.falling and self.board.falling.bottom - self.board.falling.top == self.board.falling.right - self.board.falling.left == 1:
             rotation = 0
         elif self.board.falling and min(self.board.falling.right - self.board.falling.left, self.board.falling.bottom - self.board.falling.top) == 0 and rotation >= 2:
             rotation -= 2
         self.rotation_target = rotation    # the number of anciclockwise rotation required for the block.
         self.rotation_count = 0
-        self.new_score = 0 
+        self.next_mean_height = -1 
+        self.next_var_height = -1
+        self.next_holes = 240
+        self.next_bottom_holes = -1
+
     
     @property
     def var_height(self):
+        if self.next_var_height != -1:
+            return self.next_var_height
+
         cells = {i:[24] for i in range(self.board.width)}
         for (x, y) in self.board.cells:
             cells[x].append(y)
@@ -42,6 +54,9 @@ class Candidate():
 
     @property
     def bottom_holes(self):
+        if self.next_bottom_holes != -1:
+            return self.next_bottom_holes
+
         count = 0
         for (x, y) in self.board.cells:
             if y == 23:
@@ -50,6 +65,8 @@ class Candidate():
 
     @property
     def mean_height(self):
+        if self.next_mean_height != -1:
+            return self.next_mean_height
 
         cells = {i:[24] for i in range(self.board.width)}
         for (x, y) in self.board.cells:
@@ -65,20 +82,14 @@ class Candidate():
     def falling(self):
         return self.board.falling
     
-    '''
-    @property
-    def score(self):
-        if self.board:
-            return self.board.score
-        else:
-            return 0
-    '''
-
     @property
     def holes(self):
         """
         try to count the number of holes.
         """
+        if self.next_holes != 240:
+            return self.next_holes
+
         number = 0
         cells = {i:[24] for i in range(self.board.width)}
         for (x, y) in self.board.cells:
@@ -168,6 +179,10 @@ class Candidate():
             rotation_target = max(subsequent_actions.count(Rotation.Anticlockwise), subsequent_actions.count(Rotation.Clockwise) * 3)
             next_candidate = Candidate(self.board.clone(), target = target, rotation=rotation_target)
             next_candidate.try_move(True)
+            self.next_holes = next_candidate.holes
+            self.next_var_height = next_candidate.var_height
+            self.next_bottom_holes = next_candidate.bottom_holes
+            self.next_mean_height = next_candidate.mean_height
 
             # obtain the score after the placement of the next block.
             final_score = next_candidate.score
@@ -299,7 +314,7 @@ class MyPlayer(Player):
                     new_candidate.try_move()
             
             # determin the best position for the board. Later function has higher priority and is called first.
-            sequence = [self.min_var_height, self.min_bottom_holes, self.min_mean_height, self.max_score, self.min_holes]
+            sequence = [self.min_var_height, self.min_bottom_holes, self.min_mean_height, self.min_holes, self.max_score]
             best_candidates = self.candidates
             for function in range(len(sequence) - 1, -1, -1):
                 # reversed order so that the order of execution matches the way we usually write nested function calls.
