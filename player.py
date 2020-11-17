@@ -40,7 +40,20 @@ class Candidate():
         self.mean_height = -1
         self.var_height = -1
         self.holes = -1
+        self.range = -1
 
+    def update_range(self):
+        lowest = 24
+        highest = 0
+        for i in self.cells:
+            top = min(self.cells[i] + [24])
+            if top <= lowest:
+                lowest = top
+            elif top >= highest:
+                highest = top
+        self.range = highest - lowest
+        return self.range
+        
     def update_cells(self):
         self.cells = {i:[] for i in range(self.board.width)}
         for (x, y) in self.board.cells:
@@ -170,6 +183,7 @@ class Candidate():
         self.bottom_holes = self.cal_holes()
         self.mean_height = self.cal_mean_height()
         self.var_height = self.cal_var_height()
+        self.range = self.update_range()
         
         self.score = (final_score - initial_score) // 100
 
@@ -242,6 +256,25 @@ class MyPlayer(Player):
 
         return result
 
+    def min_range(self, array = None):
+        """
+        find candidates with lowest variances of the heights of each column.
+        """
+        if array == None:
+            array = self.candidates
+
+        best_range = array[0].range
+        result = [array[0]]
+        
+        for i in array:
+            if i.range < best_range:
+                result = [i]
+                best_range = i.range
+            elif i.range == best_range:
+                result.append(i)
+
+        return result
+
     def min_var_height(self, array = None):
         """
         find candidates with lowest variances of the heights of each column.
@@ -298,7 +331,7 @@ class MyPlayer(Player):
                     new_candidate.try_move()
 
             # determin the best position for the board. Later function has higher priority and is called first.
-            sequence = [self.min_bottom_holes, self.min_var_height, self.max_score, self.min_holes, self.min_mean_height]
+            sequence = [self.min_var_height, self.min_bottom_holes, self.min_mean_height, self.min_range, self.min_holes, self.max_score]
             best_candidates = self.candidates
             for function in range(len(sequence) - 1, -1, -1):
                 # reversed order so that the order of execution matches the way we usually write nested function calls.
@@ -320,7 +353,7 @@ class MyPlayer(Player):
         return result
     
     def choose(self, array):
-        return array[0]   # tested to score better for some reason.
+        return array[len(array) // 6]   # tested to score better for some reason.
 
 class RandomPlayer(Player):
     def __init__(self, seed=None):
