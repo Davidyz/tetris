@@ -136,10 +136,7 @@ def run():
             check_stop()
 
         clock.tick(FRAMES_PER_SECOND)
-
-    while True:
-        check_stop()
-
+    return board.score
 
 if __name__ == '__main__':
-    run()
+    print(run())

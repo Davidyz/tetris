@@ -187,13 +187,13 @@ class Candidate():
             self.board.move(Direction.Drop)
         self.update_cells()
         final_score = self.board.score
-
+        
+        # update parameters
         self.holes = self.cal_holes()
         self.bottom_holes = self.cal_holes()
         self.mean_height = self.cal_mean_height()
         self.var_height = self.cal_var_height()
         self.range = self.update_range()
-        
         self.score = (final_score - initial_score) // 100
 
 class Player:
@@ -340,7 +340,7 @@ class MyPlayer(Player):
                     new_candidate.try_move()
 
             # determin the best position for the board. Later function has higher priority and is called first.
-            sequence = [self.min_bottom_holes, self.min_mean_height, self.min_range, self.min_var_height, self.min_holes,  self.max_score]
+            sequence = [self.min_bottom_holes, self.min_mean_height, self.min_var_height, self.min_range, self.min_holes, self.max_score]
             for function in range(len(sequence) - 1, -1, -1):
                 # reversed order so that the order of execution matches the way we usually write nested function calls.
                 self.candidates = sequence[function](self.candidates)
@@ -362,7 +362,7 @@ class MyPlayer(Player):
         return result
     
     def choose(self, array):
-        return array[len(array) // 6]   # tested to score better for some reason.
+        return array[-1]   # tested to score better for some reason.
 
 class RandomPlayer(Player):
     def __init__(self, seed=None):
