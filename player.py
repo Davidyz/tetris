@@ -199,7 +199,7 @@ class Candidate():
                 left -= 1
         return False
 
-    def try_move(self):
+    def try_move(self, nested = False):
         """
         Apply the move and rotation.
         return True if the action is applied (self.height and self.board.score are updated).
