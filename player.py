@@ -41,13 +41,22 @@ class Candidate():
         self.var_height = -1
         self.holes = -1
         self.range = -1
+        self.score = 0
 
         self.next_mean_height = -1 
         self.next_var_height = -1
         self.next_holes = 240
         self.next_bottom_holes = -1
         self.next_range = -1
-    
+        
+        self.weight = 100 # lower is better
+
+    def cal_weight(self):
+        coefficients = [100,              1,                  1,                      10,                      1,                      -100]
+        parameters = [self.get_holes() / 230 , self.get_range() / 23, self.get_var_height() / 144, self.get_mean_height() / 24, self.get_bottom_holes() / 10, self.score / 16]
+        self.weight = sum(coefficients[i] * parameters[i] for i in range(len(coefficients)))
+        return self.weight
+
     def get_mean_height(self):
         if self.next_mean_height != -1:
             return self.next_mean_height
@@ -244,6 +253,7 @@ class Candidate():
             final_score = next_candidate.score
 
         self.score = (final_score - initial_score) // 100
+        self.weight = self.cal_weight()
 
 class Player:
     """
@@ -382,11 +392,28 @@ class MyPlayer(Player):
         result = [array[0]]
         
         for i in array:
-            if i.get_mean_height() > best_height:
+            if i.get_mean_height() < best_height:
                 result = [i]
                 best_height = i.get_mean_height()
             elif i.get_mean_height() == best_height:
                 result.append(i)
+
+        return result
+
+    def min_weight(self, array = None):
+        if array == None:
+            array = self.candidates
+
+        least_weight = array[0].weight
+        result = [array[0]]
+
+        if len(array) > 1:
+            for i in range(1, len(array)):
+                if array[i].weight < least_weight:
+                    least_weight = array[i].weight
+                    result = [array[i]]
+                elif array[i].weight == least_weight:
+                    result.append(array[i])
 
         return result
 
@@ -408,16 +435,9 @@ class MyPlayer(Player):
                     new_candidate.try_move()
 
             # determin the best position for the board. Later function has higher priority and is called first.
-            if (not board.cells) or min(y for (x, y) in board.cells) >= 13:
-                sequence = [self.min_bottom_holes, self.min_mean_height, self.min_range, self.min_var_height, self.min_holes, self.max_score]
-            else:
-                sequence = [self.min_bottom_holes, self.min_range, self.min_var_height, self.min_holes, self.min_mean_height, self.max_score]
 
-            best_candidates = self.candidates
-            for function in range(len(sequence) - 1, -1, -1):
-                # reversed order so that the order of execution matches the way we usually write nested function calls.
-                self.candidates = sequence[function](self.candidates)
-            best_candidate = self.choose(self.candidates)
+            best_candidates = self.max_score(self.min_weight(self.candidates))
+            best_candidate = best_candidates[0]
 
             if ((best_candidate.target != board.falling.left) or best_candidate.rotation_target):
                 # generate the series of actions need to be taken.
