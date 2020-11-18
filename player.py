@@ -408,7 +408,11 @@ class MyPlayer(Player):
                     new_candidate.try_move()
 
             # determin the best position for the board. Later function has higher priority and is called first.
-            sequence = [self.min_bottom_holes, self.min_mean_height, self.min_range, self.min_var_height, self.min_holes,  self.max_score]
+            if (not board.cells) or min(y for (x, y) in board.cells) >= 13:
+                sequence = [self.min_bottom_holes, self.min_mean_height, self.min_range, self.min_var_height, self.min_holes, self.max_score]
+            else:
+                sequence = [self.min_bottom_holes, self.min_range, self.min_var_height, self.min_holes, self.min_mean_height, self.max_score]
+
             best_candidates = self.candidates
             for function in range(len(sequence) - 1, -1, -1):
                 # reversed order so that the order of execution matches the way we usually write nested function calls.
