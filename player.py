@@ -52,7 +52,7 @@ class Candidate():
         self.weight = 100 # lower is better
 
     def cal_weight(self):
-        coefficients = [100,              1,                  1,                      10,                      1,                      -100]
+        coefficients = [1000,                    1,                      10,                          15,                            5,                          -10000]
         parameters = [self.get_holes() / 230 , self.get_range() / 23, self.get_var_height() / 144, self.get_mean_height() / 24, self.get_bottom_holes() / 10, self.score / 16]
         self.weight = sum(coefficients[i] * parameters[i] for i in range(len(coefficients)))
         return self.weight
