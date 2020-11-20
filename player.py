@@ -60,7 +60,7 @@ class Candidate():
         Generate the weight for the move.
         """
         #coefficients = [998,                    2,                      10,                          200,                            150,                          -300] 72418
-        coefficients = [1001,                    2,                      10,                          205,                            150,                          -296]
+        coefficients = [1001,                    2.03,                      10.02,                          205,                            150,                          -296]
         parameters = [self.get_holes() / 230 , self.get_range() / 23, self.get_var_height() / 144, self.get_mean_height() / 240, self.get_bottom_holes() / 100, self.score / 16]
         self.weight = sum(coefficients[i] * parameters[i] for i in range(len(coefficients)))
         return self.weight
@@ -313,6 +313,9 @@ class MyPlayer(Player):
         if array == None:
             array = self.candidates
         
+        if len(array) <= 1:
+            return array
+
         best_range = 24
         result = []
         
@@ -332,6 +335,9 @@ class MyPlayer(Player):
         if array == None:
             array = self.candidates
         
+        if len(array) <= 1:
+            return array
+
         best_hole = 10 * 24
         result = []
         
@@ -351,6 +357,9 @@ class MyPlayer(Player):
         if array == None:
             array = self.candidates
         
+        if len(array) <= 1:
+            return array
+
         best_score = 0
         result = []
         
@@ -369,6 +378,9 @@ class MyPlayer(Player):
         """
         if array == None:
             array = self.candidates
+
+        if len(array) <= 1:
+            return array
 
         best_num = array[0].get_bottom_holes()
         result = [array[0]]
@@ -389,6 +401,9 @@ class MyPlayer(Player):
         if array == None:
             array = self.candidates
 
+        if len(array) <= 1:
+            return array
+
         best_var = array[0].get_var_height()
         result = [array[0]]
         
@@ -408,6 +423,9 @@ class MyPlayer(Player):
         if array == None:
             array = self.candidates
 
+        if len(array) <= 1:
+            return array
+
         best_height = array[0].get_mean_height()
         result = [array[0]]
         
@@ -426,6 +444,9 @@ class MyPlayer(Player):
         """
         if array == None:
             array = self.candidates
+
+        if len(array) <= 1:
+            return array
 
         least_weight = array[0].weight
         result = [array[0]]
@@ -461,7 +482,7 @@ class MyPlayer(Player):
 
             # determin the best position for the board according to their weight.
 
-            best_candidates = self.max_score(self.min_weight(self.candidates))
+            best_candidates = self.min_mean_height(self.min_holes(self.max_score(self.min_weight(self.candidates))))
             best_candidate = best_candidates[0]
 
             if ((best_candidate.target != board.falling.left) or best_candidate.rotation_target):
@@ -478,7 +499,7 @@ class MyPlayer(Player):
 
             result.append(Direction.Drop)
         return result
-    
+
 class RandomPlayer(Player):
     def __init__(self, seed=None):
         self.random = Random(seed)
