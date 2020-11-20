@@ -60,7 +60,7 @@ class Candidate():
         Generate the weight for the move.
         """
         #coefficients = [998,                    2,                      10,                          200,                            150,                          -300] 72418
-        coefficients = [998,                    2,                      10,                          236,                            149,                          -300]
+        coefficients = [1001,                    2,                      10,                          205,                            150,                          -296]
         parameters = [self.get_holes() / 230 , self.get_range() / 23, self.get_var_height() / 144, self.get_mean_height() / 240, self.get_bottom_holes() / 100, self.score / 16]
         self.weight = sum(coefficients[i] * parameters[i] for i in range(len(coefficients)))
         return self.weight
