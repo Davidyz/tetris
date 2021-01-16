@@ -2,6 +2,7 @@ from board import Direction, Rotation
 from random import Random, choice
 import time
 import multiprocessing as mp
+from constants import DEFAULT_WEIGHTS
 
 def same(array):
     """
@@ -19,7 +20,7 @@ class Candidate():
     A wrapper of Board().
     Contains some data and function that help choose_action().
     """
-    def __init__(self, board = None, target = 0, rotation = 0):
+    def __init__(self, board = None, target = 0, rotation = 0, weights=DEFAULT_WEIGHTS):
         self.board = board
         self.target = target    # the number of horizontal translation required by the block.
         
@@ -52,6 +53,7 @@ class Candidate():
         self.next_holes = 240
         self.next_bottom_holes = -1
         self.next_range = -1
+        self.weights = weights
         
         self.weight = 100 # lower is better
 
@@ -59,8 +61,7 @@ class Candidate():
         """
         Generate the weight for the move.
         """
-        #coefficients = [998,                    2,                      10,                          200,                            150,                          -300] 72418
-        coefficients = [1004,                    2,                      9.9,                          205,                            150.1,                          -296]
+        coefficients = self.weights
         parameters = [self.get_holes() / 230 , self.get_range() / 23, self.get_var_height() / 144, self.get_mean_height() / 240, self.get_bottom_holes() / 100, self.score / 16]
         self.weight = sum(coefficients[i] * parameters[i] for i in range(len(coefficients)))
         return self.weight
@@ -280,7 +281,7 @@ class Candidate():
             # apply the best move for the next block
             target = self.board.falling.left + subsequent_actions.count(Direction.Right) - subsequent_actions.count(Direction.Left)
             rotation_target = max(subsequent_actions.count(Rotation.Anticlockwise), subsequent_actions.count(Rotation.Clockwise) * 3)
-            next_candidate = Candidate(self.board.clone(), target = target, rotation=rotation_target)
+            next_candidate = Candidate(self.board.clone(), target = target, rotation=rotation_target, weights=self.weights)
             next_candidate.try_move(True)
             self.next_range = next_candidate.range
             self.next_holes = next_candidate.holes
@@ -305,6 +306,7 @@ class Player:
 class MyPlayer(Player):
     def __init__(self):
         self.candidates = []    # stores the candidates of possible moves.
+        self.weights = DEFAULT_WEIGHTS
     
     def min_range(self, array = None):
         """
@@ -476,7 +478,7 @@ class MyPlayer(Player):
             for horizontal in range(board.width):
                 for orientation in range(4):
                     new_board = board.clone()
-                    new_candidate = Candidate(new_board, target=horizontal, rotation=orientation)
+                    new_candidate = Candidate(new_board, target=horizontal, rotation=orientation, weights=self.weights)
                     self.candidates.append(new_candidate)
                     new_candidate.try_move()
 
