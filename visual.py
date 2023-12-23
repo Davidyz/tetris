@@ -23,8 +23,7 @@ class Visual(Frame):
         self.board = board
 
         self.master.geometry(
-            f'{(BOARD_WIDTH+6)*self.CELL_SIZE}x' +
-            f'{BOARD_HEIGHT*self.CELL_SIZE}'
+            f"{(BOARD_WIDTH+6)*self.CELL_SIZE}x" + f"{BOARD_HEIGHT*self.CELL_SIZE}"
         )
 
         self.pack(fill=BOTH, expand=1)
@@ -43,36 +42,34 @@ class Visual(Frame):
         self.canvas.create_rectangle(
             x * self.CELL_SIZE,
             y * self.CELL_SIZE,
-            (x+1) * self.CELL_SIZE,
-            (y+1) * self.CELL_SIZE,
+            (x + 1) * self.CELL_SIZE,
+            (y + 1) * self.CELL_SIZE,
             fill=color,
             outline=color,
         )
 
     def draw(self):
         with self.board.lock:
-            self.canvas.delete('all')
+            self.canvas.delete("all")
 
             if self.board.falling is not None:
-                for (x, y) in self.board.falling:
+                for x, y in self.board.falling:
                     self.draw_cell(x, y, self.board.falling.color)
 
             if self.board.next is not None:
-                for (x, y) in self.board.next:
+                for x, y in self.board.next:
                     self.draw_cell(
-                        x + self.board.width + 2,
-                        y + 1,
-                        self.board.next.color
+                        x + self.board.width + 2, y + 1, self.board.next.color
                     )
 
-            for (x, y) in self.board:
+            for x, y in self.board:
                 self.draw_cell(x, y, self.board.cellcolor[x, y])
 
             x = self.board.width * self.CELL_SIZE + 1
             y = self.board.height * self.CELL_SIZE
-            self.canvas.create_line(x, 0, x, y, fill='black')
+            self.canvas.create_line(x, 0, x, y, fill="black")
 
-            self.master.title(f'Score: {self.board.score}')
+            self.master.title(f"Score: {self.board.score}")
 
             self.after(DRAW_INTERVAL, self.draw)
 
@@ -99,19 +96,19 @@ class UserPlayer(Player):
 
     def key(self, event):
         with self.has_move:
-            if event.keysym == 'Up':
+            if event.keysym == "Up":
                 self.next_move = Rotation.Clockwise
-            elif event.keysym == 'Right':
+            elif event.keysym == "Right":
                 self.next_move = Direction.Right
-            elif event.keysym == 'Down':
+            elif event.keysym == "Down":
                 self.next_move = Direction.Down
-            elif event.keysym == 'Left':
+            elif event.keysym == "Left":
                 self.next_move = Direction.Left
-            elif event.keysym == 'space':
+            elif event.keysym == "space":
                 self.next_move = Direction.Drop
-            elif event.keysym == 'z':
+            elif event.keysym == "z":
                 self.next_move = Rotation.Clockwise
-            elif event.keysym == 'x':
+            elif event.keysym == "x":
                 self.next_move = Rotation.Anticlockwise
             else:
                 return
@@ -139,7 +136,7 @@ def run():
 
     # Try making window a dialog if the system allows it.
     try:
-        root.attributes('-type', 'dialog')
+        root.attributes("-type", "dialog")
     except TclError:
         pass
 
@@ -169,5 +166,5 @@ def run():
     raise SystemExit
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run()

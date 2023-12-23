@@ -3,6 +3,7 @@ from constants import BOARD_WIDTH, BOARD_HEIGHT, INTERVAL
 from player import Player, SelectedPlayer, RandomPlayer, MyPlayer
 from adversary import RandomAdversary
 
+
 def run(seed, player):
     board = Board(BOARD_WIDTH, BOARD_HEIGHT)
     adversary = RandomAdversary(seed=seed)
@@ -12,7 +13,8 @@ def run(seed, player):
 
     return board.score
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     index = 0
     signed = []
     weights = []

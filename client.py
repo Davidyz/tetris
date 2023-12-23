@@ -19,9 +19,9 @@ class RemotePlayer(Player):
             if instruction.startswith(PREFIX):
                 break
 
-        instruction = instruction[len(PREFIX)+1:]
+        instruction = instruction[len(PREFIX) + 1 :]
 
-        if instruction == 'SKIP':
+        if instruction == "SKIP":
             return None
 
         try:
@@ -40,21 +40,21 @@ class RemotePlayer(Player):
 board = Board(BOARD_WIDTH, BOARD_HEIGHT)
 
 player = RemotePlayer()
-adversary = RandomAdversary(getenv('SEED'), BLOCK_LIMIT)
+adversary = RandomAdversary(getenv("SEED"), BLOCK_LIMIT)
 
 
 score = 0
 try:
     for move in board.run(player, adversary):
         if isinstance(move, Shape):
-            print(f'{PREFIX} {move.value}')
+            print(f"{PREFIX} {move.value}")
 
         if board.score != score:
-            stderr.write(f'{board.score}\n')
+            stderr.write(f"{board.score}\n")
             score = board.score
 except BlockLimitException:
-    stderr.write('WON\n')
-    print(f'{PREFIX} WON')
+    stderr.write("WON\n")
+    print(f"{PREFIX} WON")
 else:
-    stderr.write('LOST\n')
-    print(f'{PREFIX} LOST')
+    stderr.write("LOST\n")
+    print(f"{PREFIX} LOST")

@@ -8,10 +8,10 @@ class Direction(Enum):
     Possible directions to move a block, plus dropping.
     """
 
-    Left = 'LEFT'
-    Right = 'RIGHT'
-    Down = 'DOWN'
-    Drop = 'DROP'
+    Left = "LEFT"
+    Right = "RIGHT"
+    Down = "DOWN"
+    Drop = "DROP"
 
 
 class Rotation(Enum):
@@ -19,8 +19,8 @@ class Rotation(Enum):
     Possible rotations available to the player.
     """
 
-    Clockwise = 'CLOCKWISE'
-    Anticlockwise = 'ANTICLOCKWISE'
+    Clockwise = "CLOCKWISE"
+    Anticlockwise = "ANTICLOCKWISE"
 
 
 class Shape(Enum):
@@ -28,13 +28,13 @@ class Shape(Enum):
     Possible shapes of tetrominoes.
     """
 
-    I = 'I'  # noqa
-    J = 'J'
-    L = 'L'
-    O = 'O'  # noqa
-    S = 'S'
-    T = 'T'
-    Z = 'Z'
+    I = "I"  # noqa
+    J = "J"
+    L = "L"
+    O = "O"  # noqa
+    S = "S"
+    T = "T"
+    Z = "Z"
 
 
 # Translate names of shapes to initial coordinates.
@@ -46,30 +46,40 @@ shape_to_cells = {
         (0, 3),
     },
     Shape.J: {
-                (1, 0),
-                (1, 1),
-        (0, 2), (1, 2), # noqa
+        (1, 0),
+        (1, 1),
+        (0, 2),
+        (1, 2),  # noqa
     },
     Shape.L: {
         (0, 0),
         (0, 1),
-        (0, 2), (1, 2),
+        (0, 2),
+        (1, 2),
     },
     Shape.O: {
-        (0, 0), (1, 0),
-        (0, 1), (1, 1),
+        (0, 0),
+        (1, 0),
+        (0, 1),
+        (1, 1),
     },
     Shape.S: {
-                (1, 0), (2, 0),
-        (0, 1), (1, 1),
+        (1, 0),
+        (2, 0),
+        (0, 1),
+        (1, 1),
     },
     Shape.T: {
-        (0, 0), (1, 0), (2, 0),
-                (1, 1),
+        (0, 0),
+        (1, 0),
+        (2, 0),
+        (1, 1),
     },
     Shape.Z: {
-        (0, 0), (1, 0),
-                (1, 1), (2, 1),
+        (0, 0),
+        (1, 0),
+        (1, 1),
+        (2, 1),
     },
 }
 
@@ -182,7 +192,7 @@ class Block(Bitmap):
 
         center = self.left + (self.right - self.left) // 2
         shift = board.width // 2 - center
-        self.cells = {(x+shift, y) for (x, y) in self}
+        self.cells = {(x + shift, y) for (x, y) in self}
         self.center = self.center[0] + shift, self.center[1]
 
     def supported(self, board):
@@ -192,10 +202,7 @@ class Block(Bitmap):
         block down once more will mark it as dropped.
         """
 
-        return any(
-            (x, y+1) in board or y+1 == board.height
-            for (x, y) in self
-        )
+        return any((x, y + 1) in board or y + 1 == board.height for (x, y) in self)
 
     def move(self, direction, board, count=1):
         """
@@ -206,21 +213,21 @@ class Block(Bitmap):
         old_cells = self.cells
 
         if direction == Direction.Right:
-            self.cells = {(x+count, y) for (x, y) in self}
+            self.cells = {(x + count, y) for (x, y) in self}
             if self.right >= board.width or self.collides(board):
                 # We hit something by moving; undo.
                 self.cells = old_cells
             else:
-                self.center = self.center[0]+count, self.center[1]
+                self.center = self.center[0] + count, self.center[1]
             return False
 
         elif direction == Direction.Left:
-            self.cells = {(x-count, y) for (x, y) in self}
+            self.cells = {(x - count, y) for (x, y) in self}
             if self.left < 0 or self.collides(board):
                 # We hit something by moving; undo.
                 self.cells = old_cells
             else:
-                self.center = self.center[0]-count, self.center[1]
+                self.center = self.center[0] - count, self.center[1]
             return False
 
         elif direction == Direction.Down:
@@ -229,10 +236,10 @@ class Block(Bitmap):
                 # as dropped and do not move it.
                 return True
 
-            self.cells = {(x, y+count) for (x, y) in self}
+            self.cells = {(x, y + count) for (x, y) in self}
             # Score a point for every row a block drops.
             board.score += count
-            self.center = self.center[0], self.center[1]+count
+            self.center = self.center[0], self.center[1] + count
             return False
 
         elif direction == Direction.Drop:
@@ -253,9 +260,9 @@ class Block(Bitmap):
         # Rotate around the center, which remains in place.
         cx, cy = self.center
         if rotation == Rotation.Clockwise:
-            self.cells = {(int(-(y-cy)+cx), int(x-cx+cy)) for (x, y) in self}
+            self.cells = {(int(-(y - cy) + cx), int(x - cx + cy)) for (x, y) in self}
         elif rotation == Rotation.Anticlockwise:
-            self.cells = {(int(y-cy+cx), int(-(x-cx)+cy)) for (x, y) in self}
+            self.cells = {(int(y - cy + cx), int(-(x - cx) + cy)) for (x, y) in self}
 
         try:
             # If block has hit left boundary, back off.
@@ -269,7 +276,7 @@ class Block(Bitmap):
             # Same for the right boundary.
             right = self.right
             if right >= board.width:
-                self.move(Direction.Left, board, right-board.width+1)
+                self.move(Direction.Left, board, right - board.width + 1)
                 # We could not correct; abort moving.
                 if self.right >= board.width:
                     raise MoveFailedException
@@ -340,13 +347,13 @@ class Board(Bitmap):
         """
 
         self.cellcolor = {
-            (x, y) if y > line else (x, y+1): c
-            for (x, y), c in self.cellcolor.items() if y != line
+            (x, y) if y > line else (x, y + 1): c
+            for (x, y), c in self.cellcolor.items()
+            if y != line
         }
 
         self.cells = {
-            (x, y) if y > line else (x, y+1)
-            for (x, y) in self if y != line
+            (x, y) if y > line else (x, y + 1) for (x, y) in self if y != line
         }
 
     def clean(self):
@@ -358,7 +365,7 @@ class Board(Bitmap):
         scores = [0, 100, 400, 800, 1600]
         removed = 0
 
-        line = self.height-1
+        line = self.height - 1
         while line > 0:
             while self.line_full(line):
                 self.remove_line(line)

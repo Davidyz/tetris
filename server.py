@@ -16,9 +16,9 @@ class RemoteAdversary(Adversary):
             if command.startswith(PREFIX):
                 break
 
-        command = command[len(PREFIX)+1:]
+        command = command[len(PREFIX) + 1 :]
 
-        if command == 'WON' or command == 'LOST':
+        if command == "WON" or command == "LOST":
             # Game ended; stop cleanly.
             raise SystemExit
 
@@ -37,8 +37,8 @@ adversary = RemoteAdversary()
 
 for move in board.run(player, adversary):
     if isinstance(move, Direction):
-        print(f'{PREFIX} {move.value}')
+        print(f"{PREFIX} {move.value}")
     elif isinstance(move, Rotation):
-        print(f'{PREFIX} {move.value}')
+        print(f"{PREFIX} {move.value}")
     elif move is None:
-        print(f'{PREFIX} SKIP')
+        print(f"{PREFIX} SKIP")

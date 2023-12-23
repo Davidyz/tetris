@@ -37,22 +37,18 @@ def render(screen, board):
     sprites = pygame.sprite.Group()
 
     # Add the cells already on the board for drawing.
-    for (x, y) in board:
+    for x, y in board:
         sprites.add(Square(pygame.Color(board.cellcolor[x, y]), x, y))
 
     if board.falling is not None:
         # Add the cells of the falling block for drawing.
-        for (x, y) in board.falling:
+        for x, y in board.falling:
             sprites.add(Square(pygame.Color(board.falling.color), x, y))
 
     if board.next is not None:
-        for (x, y) in board.next:
+        for x, y in board.next:
             sprites.add(
-                Square(
-                    pygame.Color(board.next.color),
-                    x + board.width + 2,
-                    y+1
-                )
+                Square(pygame.Color(board.next.color), x + board.width + 2, y + 1)
             )
 
     sprites.draw(screen)
@@ -61,11 +57,11 @@ def render(screen, board):
         screen,
         BLUE,
         (board.width * CELL_WIDTH + 2, 0),
-        (board.width * CELL_WIDTH + 2, board.height * CELL_HEIGHT)
+        (board.width * CELL_WIDTH + 2, board.height * CELL_HEIGHT),
     )
 
     # Update window title with score.
-    pygame.display.set_caption(f'Score: {board.score}')
+    pygame.display.set_caption(f"Score: {board.score}")
 
 
 class UserPlayer(Player):
@@ -117,10 +113,9 @@ def run():
 
     pygame.init()
 
-    screen = pygame.display.set_mode([
-        (BOARD_WIDTH + 6) * CELL_WIDTH,
-        BOARD_HEIGHT * CELL_HEIGHT
-    ])
+    screen = pygame.display.set_mode(
+        [(BOARD_WIDTH + 6) * CELL_WIDTH, BOARD_HEIGHT * CELL_HEIGHT]
+    )
 
     clock = pygame.time.Clock()
 
@@ -138,5 +133,6 @@ def run():
         clock.tick(FRAMES_PER_SECOND)
     return board.score
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     print(run())

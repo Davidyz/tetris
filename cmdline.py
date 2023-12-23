@@ -27,12 +27,12 @@ COLOR_NAMES = {
     "green": COLOR_GREEN,
     "cyan": COLOR_CYAN,
     "blue": COLOR_BLUE,
-    "magenta": COLOR_MAGENTA
+    "magenta": COLOR_MAGENTA,
 }
 
 
 def paint(window, x, y, color, count=1):
-    window.addstr(y, x*2, '  ' * count, curses.color_pair(color))
+    window.addstr(y, x * 2, "  " * count, curses.color_pair(color))
 
 
 def render(window, board):
@@ -52,7 +52,7 @@ def render(window, board):
             else:
                 # There is nothing here.
                 color = COLOR_NOTHING
-            paint(window, x+1, y, color)
+            paint(window, x + 1, y, color)
 
     # Draw the next piece
     if board.next is not None:
@@ -63,38 +63,35 @@ def render(window, board):
                 else:
                     color = COLOR_NOTHING
 
-                paint(window, board.width+x+3, y+1, color)
+                paint(window, board.width + x + 3, y + 1, color)
 
     # Draw the score line below the window.
     window.addstr(
-        board.height+2,
-        0,
-        f'Score: {board.score} ',
-        curses.color_pair(COLOR_NOTHING)
+        board.height + 2, 0, f"Score: {board.score} ", curses.color_pair(COLOR_NOTHING)
     )
 
     # Draw the board frame
     window.move(0, 0)
-    window.vline(curses.ACS_VLINE, board.height+2)
+    window.vline(curses.ACS_VLINE, board.height + 2)
     window.move(0, 1)
-    window.vline(curses.ACS_VLINE, board.height+1)
+    window.vline(curses.ACS_VLINE, board.height + 1)
     window.addch(0, 0, curses.ACS_ULCORNER)
     window.addch(0, 1, curses.ACS_URCORNER)
-    window.move(0, board.width*2+2)
-    window.vline(curses.ACS_VLINE, board.height+1)
-    window.move(0, board.width*2+3)
-    window.vline(curses.ACS_VLINE, board.height+2)
-    window.addch(0, board.width*2+2, curses.ACS_ULCORNER)
-    window.addch(0, board.width*2+3, curses.ACS_URCORNER)
-    window.move(board.height+1, 0)
-    window.hline(curses.ACS_HLINE, board.width*2+3)
+    window.move(0, board.width * 2 + 2)
+    window.vline(curses.ACS_VLINE, board.height + 1)
+    window.move(0, board.width * 2 + 3)
+    window.vline(curses.ACS_VLINE, board.height + 2)
+    window.addch(0, board.width * 2 + 2, curses.ACS_ULCORNER)
+    window.addch(0, board.width * 2 + 3, curses.ACS_URCORNER)
+    window.move(board.height + 1, 0)
+    window.hline(curses.ACS_HLINE, board.width * 2 + 3)
     window.move(board.height, 1)
-    window.hline(curses.ACS_HLINE, board.width*2+1)
-    window.addch(board.height+1, 0, curses.ACS_LLCORNER)
+    window.hline(curses.ACS_HLINE, board.width * 2 + 1)
+    window.addch(board.height + 1, 0, curses.ACS_LLCORNER)
     window.addch(board.height, 1, curses.ACS_LLCORNER)
-    window.addch(board.height+1, board.width*2+3, curses.ACS_LRCORNER)
-    window.addch(board.height, board.width*2+2, curses.ACS_LRCORNER)
-    window.move(board.height+2, 0)
+    window.addch(board.height + 1, board.width * 2 + 3, curses.ACS_LRCORNER)
+    window.addch(board.height, board.width * 2 + 2, curses.ACS_LRCORNER)
+    window.move(board.height + 2, 0)
 
     window.refresh()
 
@@ -120,13 +117,13 @@ class UserPlayer(Player):
             return Direction.Left
         elif key == curses.KEY_DOWN:
             return Direction.Down
-        elif key == ord(' '):
+        elif key == ord(" "):
             return Direction.Drop
         elif key == curses.KEY_UP:
             return Rotation.Clockwise
-        elif key == ord('z'):
+        elif key == ord("z"):
             return Rotation.Anticlockwise
-        elif key == ord('x'):
+        elif key == ord("x"):
             return Rotation.Clockwise
         elif key == curses.ascii.ESC:
             raise SystemExit
@@ -160,7 +157,7 @@ def run(window):
     window.getch()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         # Initialize terminal settings
         curses.initscr()
@@ -168,10 +165,7 @@ if __name__ == '__main__':
         curses.noecho()
         curses.cbreak()
 
-        window = curses.newwin(
-            BOARD_HEIGHT + 3,
-            (BOARD_WIDTH + 2 + 6)*2 + 1
-        )
+        window = curses.newwin(BOARD_HEIGHT + 3, (BOARD_WIDTH + 2 + 6) * 2 + 1)
         window.keypad(True)
 
         # Prepare some colors to use for drawing.
@@ -187,11 +181,7 @@ if __name__ == '__main__':
         curses.init_pair(COLOR_GREEN, curses.COLOR_WHITE, curses.COLOR_GREEN)
         curses.init_pair(COLOR_CYAN, curses.COLOR_WHITE, curses.COLOR_CYAN)
         curses.init_pair(COLOR_BLUE, curses.COLOR_WHITE, curses.COLOR_BLUE)
-        curses.init_pair(
-            COLOR_MAGENTA,
-            curses.COLOR_WHITE,
-            curses.COLOR_MAGENTA
-        )
+        curses.init_pair(COLOR_MAGENTA, curses.COLOR_WHITE, curses.COLOR_MAGENTA)
 
         run(window)
     finally:
